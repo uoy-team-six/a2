@@ -88,3 +88,11 @@ body {
     width: 70vw;
     padding-left: 15vw;
 }
+
+.summary p {
+    color: white;
+    margin: auto;
+    width: 80vw;
+    font-size: 20px;
+    text-align: center;
+}
