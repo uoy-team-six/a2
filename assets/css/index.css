@@ -1,29 +1,28 @@
-:root {
+/*
     --background: #121212;
     --background-secondary: #1F1B24;
     --primary: #42a5f5;
     --secondary: #ab47bc;
     --text: #fff;
 }
+    */
 
 body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--background-secondary);
+    font-family: "Work Sans", sans-serif;
+    font-weight: 400;
+    background-color: #1F1B24;
+    color: #fff;
 }
 
-#title-container {
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 5vh;
-    background-color: var(--background);
-    color: var(--text);
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Montserrat", sans-serif;
+    font-weight: 700;
+    color: #fff;
 }
 
-#title {
-    display: flexbox;
+a, a:hover, a:link, a:active, a:visited {
+    color: #42a5f5;
+    text-decoration: none;
 }
 
 #header-container {
@@ -32,23 +31,23 @@ body {
     justify-content: center;
     align-items: center;
     flex-wrap: nowrap;
-    height: 5vh;
-    background-color: var(--background);
+    height: 55px;
+    background-color: #121212;
 }
 
 .header-item {
     display: flexbox;
     margin-left: 7vw;
-    color: var(--text);
+    color: #fff;
 }
 
 .header-item > p > a {
-    color: var(--text);
+    color: #fff;
     text-decoration: none;
 }
 
 .header-item:hover {
-    background-color: var(--primary);
+    color: #42a5f5;
 }
 
 .dropdown {
@@ -63,37 +62,50 @@ body {
 .dropdown-content {
     display: none;
     position: absolute;
-    background-color: var(--background);
-    width: 10vw;
+    background-color: #121212;
+    width: 120px;
     z-index: 1;
 }
 
 .dropdown-content > a {
     display: block;
     text-decoration: none;
-    color: var(--text);
+    color: #fff;
     border-top: 1px solid var(--text);
     border-bottom: 1px solid var(--text);
     padding: 1vh;
 }
 
 .dropdown-content > a:hover {
-    background-color: var(--primary);
+    background-color: #42a5f5;
 }
+
 .dropdown-content > a:last-child, a:first-child {
     border: none;
 }
 
-#gameplay-image {
-    width: 70vw;
-    padding-left: 15vw;
+#footer {
+    font-size: 12px;
 }
 
-.summary-sentence p {
-    color: white;
-    margin: auto;
-    width: 80vw;
-    font-size: 20px;
+#home-main img {
+    padding: 20px;
+}
+
+#home-main, #footer {
     text-align: center;
-    padding-top: 20px;
+    width: auto;
+}
+
+#home-main, #a2-main {
+    padding: 20px 75px;
+}
+
+#footer {
+    padding: 5px 75px;
+}
+
+#a2-main {
+    text-align: left;
+    width: auto;
 }
