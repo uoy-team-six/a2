@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameScreen.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim.screen</a> &gt; <span class="el_source">GameScreen.java</span></div><h1>GameScreen.java</h1><pre class="source lang-java linenums">package io.github.unisim.screen;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.ScreenAdapter;
+import io.github.unisim.GameCursor;
+import io.github.unisim.GameLogic;
+import io.github.unisim.GlobalState;
+import io.github.unisim.UniSimGame;
+import io.github.unisim.ui.GameOverUiStage;
+import io.github.unisim.ui.MainUiStage;
+import io.github.unisim.world.UiInputProcessor;
+import io.github.unisim.world.World;
+import io.github.unisim.world.WorldInputProcessor;
+
+/**
+ * Game screen where the main game is rendered and controlled.
+ * Supports pausing the game with a pause menu.
+ */
+public class GameScreen extends ScreenAdapter {
+    private final UniSimGame game;
+    private final World world;
+    private final GameLogic gameLogic;
+    private final WorldInputProcessor worldInputProcessor;
+
+    private final MainUiStage mainUiStage;
+    private final GameOverUiStage gameOverUiStage;
+    private final InputMultiplexer mainInputMultiplexer;
+    private final InputMultiplexer gameOverInputMultiplexer;
+    private boolean wasGameOver;
+
+    /**
+     * Constructor for the GameScreen.
+     */
+<span class="nc" id="L36">    public GameScreen(UniSimGame game) {</span>
+<span class="nc" id="L37">        this.game = game;</span>
+<span class="nc" id="L38">        world = new World();</span>
+<span class="nc" id="L39">        world.loadMap(&quot;map/medium_map.tmx&quot;);</span>
+<span class="nc" id="L40">        gameLogic = new GameLogic(world, GlobalState.settings.getDifficulty());</span>
+<span class="nc" id="L41">        worldInputProcessor = new WorldInputProcessor(world, gameLogic);</span>
+
+<span class="nc" id="L43">        mainUiStage = new MainUiStage(this);</span>
+<span class="nc" id="L44">        gameOverUiStage = new GameOverUiStage(game);</span>
+
+<span class="nc" id="L46">        mainInputMultiplexer = new InputMultiplexer();</span>
+<span class="nc" id="L47">        mainInputMultiplexer.addProcessor(GlobalState.fullscreenInputProcessor);</span>
+<span class="nc" id="L48">        mainInputMultiplexer.addProcessor(mainUiStage);</span>
+<span class="nc" id="L49">        mainInputMultiplexer.addProcessor(new UiInputProcessor(mainUiStage));</span>
+<span class="nc" id="L50">        mainInputMultiplexer.addProcessor(worldInputProcessor);</span>
+
+<span class="nc" id="L52">        gameOverInputMultiplexer = new InputMultiplexer();</span>
+<span class="nc" id="L53">        gameOverInputMultiplexer.addProcessor(GlobalState.fullscreenInputProcessor);</span>
+<span class="nc" id="L54">        gameOverInputMultiplexer.addProcessor(gameOverUiStage);</span>
+<span class="nc" id="L55">    }</span>
+
+    @Override
+    public void render(float deltaTime) {
+        // Set cursor.
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (world.isZoomingIn()) {</span>
+<span class="nc" id="L61">            game.setCursor(GameCursor.ZOOM_IN);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        } else if (world.isZoomingOut()) {</span>
+<span class="nc" id="L63">            game.setCursor(GameCursor.ZOOM_OUT);</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        } else if (worldInputProcessor.isPanning()) {</span>
+<span class="nc" id="L65">            game.setCursor(GameCursor.HAND_OPEN);</span>
+        } else {
+<span class="nc" id="L67">            game.setCursor(GameCursor.POINTER);</span>
+        }
+
+<span class="nc bnc" id="L70" title="All 4 branches missed.">        if (GlobalState.settings.areDebugKeysEnabled() &amp;&amp; Gdx.input.isKeyPressed(Input.Keys.F1)) {</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">            if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {</span>
+<span class="nc" id="L72">                deltaTime *= 100.0f;</span>
+            } else {
+<span class="nc" id="L74">                deltaTime *= 10.0f;</span>
+            }
+        }
+
+<span class="nc bnc" id="L78" title="All 4 branches missed.">        if (GlobalState.settings.areDebugKeysEnabled() &amp;&amp; Gdx.input.isKeyJustPressed(Input.Keys.F3)) {</span>
+<span class="nc" id="L79">            gameLogic.getEventManager().startNewEvent();</span>
+        }
+
+        // Update game logic and active UI stage.
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        final var activeUiStage = gameLogic.isGameOver() ? gameOverUiStage : mainUiStage;</span>
+<span class="nc" id="L84">        gameLogic.update(deltaTime);</span>
+<span class="nc" id="L85">        activeUiStage.act(deltaTime);</span>
+
+        // Game over camera handling.
+<span class="nc bnc" id="L88" title="All 2 branches missed.">        if (gameLogic.isGameOver()) {</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">            if (!wasGameOver) {</span>
+<span class="nc" id="L90">                wasGameOver = true;</span>
+<span class="nc" id="L91">                Gdx.input.setInputProcessor(gameOverInputMultiplexer);</span>
+<span class="nc" id="L92">                gameOverUiStage.onGameOver(gameLogic.calculateScore());</span>
+            }
+<span class="nc" id="L94">            world.selectedBuilding = null;</span>
+<span class="nc" id="L95">            world.zoom((world.getMaxZoom() - world.getZoom()) * 2f);</span>
+<span class="nc" id="L96">            world.pan((150 - world.getCameraPos().x) / 10, -world.getCameraPos().y / 10);</span>
+        }
+
+        // Render the world.
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        world.render(gameLogic.isPaused() ? 0.0f : deltaTime);</span>
+
+        // Render the active UI last.
+<span class="nc" id="L103">        activeUiStage.draw();</span>
+<span class="nc" id="L104">    }</span>
+
+    @Override
+    public void resize(int width, int height) {
+<span class="nc" id="L108">        world.resize(width, height);</span>
+<span class="nc" id="L109">        mainUiStage.resize(width, height);</span>
+<span class="nc" id="L110">        gameOverUiStage.resize(width, height);</span>
+<span class="nc" id="L111">    }</span>
+
+    @Override
+    public void show() {
+<span class="nc" id="L115">        Gdx.input.setInputProcessor(mainInputMultiplexer);</span>
+<span class="nc" id="L116">    }</span>
+
+    @Override
+    public void pause() {
+        // Pause game timer if game loses focus.
+<span class="nc" id="L121">        gameLogic.pause();</span>
+<span class="nc" id="L122">    }</span>
+
+    @Override
+    public void dispose() {
+<span class="nc" id="L126">        world.dispose();</span>
+<span class="nc" id="L127">        mainUiStage.dispose();</span>
+<span class="nc" id="L128">    }</span>
+
+    public UniSimGame getGame() {
+<span class="nc" id="L131">        return game;</span>
+    }
+
+    public World getWorld() {
+<span class="nc" id="L135">        return world;</span>
+    }
+
+    public GameLogic getGameLogic() {
+<span class="nc" id="L139">        return gameLogic;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

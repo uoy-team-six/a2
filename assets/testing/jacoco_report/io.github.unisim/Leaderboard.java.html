@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Leaderboard.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim</a> &gt; <span class="el_source">Leaderboard.java</span></div><h1>Leaderboard.java</h1><pre class="source lang-java linenums">package io.github.unisim;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * A class which represents the game leaderboard.
+ */
+public class Leaderboard {
+    private final Map&lt;String, Integer&gt; scoreMap;
+
+<span class="fc" id="L13">    public Leaderboard() {</span>
+<span class="fc" id="L14">        scoreMap = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L15">    }</span>
+
+    /**
+     * Adds a new entry to the leaderboard for the given player's name and score. If the player already exists, only
+     * overwrites their score if the given score is higher.
+     *
+     * @param name  the name of the player
+     * @param score the newest score of the player
+     */
+    public void addScore(String name, int score) {
+<span class="fc bfc" id="L25" title="All 2 branches covered.">        scoreMap.merge(name, score, (oldScore, newScore) -&gt; newScore &gt; oldScore ? newScore : oldScore);</span>
+<span class="fc" id="L26">    }</span>
+
+    /**
+     * Removes all leaderboard entries.
+     */
+    public void clear() {
+<span class="fc" id="L32">        scoreMap.clear();</span>
+<span class="fc" id="L33">    }</span>
+
+    /**
+     * Returns the score for the given player name.
+     *
+     * @param name a player name
+     * @return score if the given player name exists; 0 otherwise
+     */
+    public int getScore(String name) {
+<span class="fc" id="L42">        return scoreMap.getOrDefault(name, 0);</span>
+    }
+
+    /**
+     * Returns a list of player names in score-descending order.
+     *
+     * @return an immutable list of player names
+     */
+    public List&lt;String&gt; getSortedNames() {
+<span class="fc" id="L51">        return scoreMap.entrySet()</span>
+<span class="fc" id="L52">            .stream()</span>
+<span class="fc" id="L53">            .sorted((a, b) -&gt; b.getValue().compareTo(a.getValue()))</span>
+<span class="fc" id="L54">            .map(Map.Entry::getKey)</span>
+<span class="fc" id="L55">            .toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

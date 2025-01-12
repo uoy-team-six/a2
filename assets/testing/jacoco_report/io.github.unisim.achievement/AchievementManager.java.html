@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AchievementManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim.achievement</a> &gt; <span class="el_source">AchievementManager.java</span></div><h1>AchievementManager.java</h1><pre class="source lang-java linenums">package io.github.unisim.achievement;
+
+import io.github.unisim.GameLogic;
+
+import java.util.*;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
+
+public class AchievementManager {
+    // The time in seconds to show achievements for.
+    public static final float ACHIEVEMENT_DISPLAY_TIME = 5.0f;
+
+    private final IntSupplier moneySupplier;
+    private final Supplier&lt;Float&gt; satisfactionSupplier;
+    private final IntSupplier studentCountSupplier;
+    private final Set&lt;Achievement&gt; unlockedAchievements;
+
+    // Keep track of recently unlocked achievements.
+    private final List&lt;Achievement&gt; recentlyUnlockedAchievements;
+    private float recentlyUnlockedTimer;
+
+    private float highStudentSatisfactionTime;
+
+<span class="fc" id="L24">    public AchievementManager(IntSupplier moneySupplier, Supplier&lt;Float&gt; satisfactionSupplier, IntSupplier studentCountSupplier) {</span>
+<span class="fc" id="L25">        this.moneySupplier = moneySupplier;</span>
+<span class="fc" id="L26">        this.satisfactionSupplier = satisfactionSupplier;</span>
+<span class="fc" id="L27">        this.studentCountSupplier = studentCountSupplier;</span>
+<span class="fc" id="L28">        unlockedAchievements = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L29">        recentlyUnlockedAchievements = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L30">    }</span>
+
+    public AchievementManager(GameLogic gameLogic) {
+<span class="fc" id="L33">        this(gameLogic::getMoney, gameLogic::getSatisfaction, gameLogic::getStudentCount);</span>
+<span class="fc" id="L34">    }</span>
+
+    /**
+     * Unlock the given achievement.
+     *
+     * @param achievement the achievement to unlock
+     */
+    public void unlock(Achievement achievement) {
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">        if (!unlockedAchievements.add(achievement)) {</span>
+            // Achievement was already unlocked.
+<span class="nc" id="L44">            return;</span>
+        }
+
+        // New achievement unlocked!
+<span class="fc" id="L48">        recentlyUnlockedAchievements.add(achievement);</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        if (recentlyUnlockedTimer &lt;= 0.0f) {</span>
+<span class="fc" id="L50">            recentlyUnlockedTimer = ACHIEVEMENT_DISPLAY_TIME;</span>
+        }
+<span class="fc" id="L52">    }</span>
+
+    /**
+     * Checks the current game state and unlocks any achievements that have the requirements met.
+     *
+     * @param deltaTime the delta time between the last call of update
+     */
+    public void update(float deltaTime) {
+        // Update recently unlocked achievement logic.
+<span class="fc" id="L61">        recentlyUnlockedTimer -= deltaTime;</span>
+<span class="pc bpc" id="L62" title="1 of 4 branches missed.">        if (recentlyUnlockedTimer &lt;= 0.0f &amp;&amp; !recentlyUnlockedAchievements.isEmpty()) {</span>
+<span class="fc" id="L63">            recentlyUnlockedAchievements.remove(0);</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">            if (!recentlyUnlockedAchievements.isEmpty()) {</span>
+<span class="fc" id="L65">                recentlyUnlockedTimer = ACHIEVEMENT_DISPLAY_TIME;</span>
+            }
+        }
+
+        // Entrepreneur achievement (earned more than 500k).
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (moneySupplier.getAsInt() &gt; 500_000) {</span>
+<span class="fc" id="L71">            unlock(Achievement.ENTREPRENEUR);</span>
+        }
+
+        // I heart uni achievement (&gt; 75% satisfaction for 2 minutes).
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (satisfactionSupplier.get() &gt; 0.75f) {</span>
+<span class="fc" id="L76">            highStudentSatisfactionTime += deltaTime;</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">            if (highStudentSatisfactionTime &gt;= 120.0f) {</span>
+<span class="nc" id="L78">                unlock(Achievement.I_HEART_UNI);</span>
+            }
+        } else {
+<span class="fc" id="L81">            highStudentSatisfactionTime = 0.0f;</span>
+        }
+
+        // Rising population achievement (&gt;= 100 students).
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (studentCountSupplier.getAsInt() &gt;= 100) {</span>
+<span class="fc" id="L86">            unlock(Achievement.STUDENT_COUNT);</span>
+        }
+<span class="fc" id="L88">    }</span>
+
+    /**
+     * @return whether the given achievement is unlocked
+     */
+    public boolean isUnlocked(Achievement achievement) {
+<span class="fc" id="L94">        return unlockedAchievements.contains(achievement);</span>
+    }
+
+    /**
+     * @return an unmodifiable set of unlocked achievements
+     */
+    public Set&lt;Achievement&gt; getUnlockedAchievements() {
+<span class="nc" id="L101">        return Collections.unmodifiableSet(unlockedAchievements);</span>
+    }
+
+    /**
+     * @return the recently unlocked achievement if any; null otherwise
+     */
+    public Achievement getRecentlyUnlockedAchievement() {
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        if (recentlyUnlockedAchievements.isEmpty()) {</span>
+<span class="fc" id="L109">            return null;</span>
+        }
+<span class="fc" id="L111">        return recentlyUnlockedAchievements.get(0);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameOverUiStage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim.ui</a> &gt; <span class="el_source">GameOverUiStage.java</span></div><h1>GameOverUiStage.java</h1><pre class="source lang-java linenums">package io.github.unisim.ui;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import io.github.unisim.GlobalState;
+import io.github.unisim.Score;
+import io.github.unisim.UniSimGame;
+
+public class GameOverUiStage extends Stage {
+    private final Table table;
+    private final Label gameOverLabel;
+    private final Table breakdownTable;
+    private final Cell&lt;?&gt; breakdownLeftSpacer;
+    private final Cell&lt;?&gt; breakdownRightSpacer;
+    private final TextField nameTextField;
+    private final Cell&lt;TextField&gt; nameTextFieldCell;
+    private final Cell&lt;TextButton&gt; buttonCell;
+    private int finalScore;
+
+    public GameOverUiStage(UniSimGame game) {
+<span class="nc" id="L25">        super(new ScreenViewport());</span>
+<span class="nc" id="L26">        table = new Table();</span>
+<span class="nc" id="L27">        table.setFillParent(true);</span>
+
+        // Play button.
+<span class="nc" id="L30">        final var mainMenuButton = new TextButton(&quot;Return to Main Menu&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L31">        mainMenuButton.addListener(new ClickListener() {</span>
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Switch to the start menu screen.
+<span class="nc" id="L35">                game.setScreen(game.getStartMenuScreen());</span>
+
+                // Add leaderboard entry if player has entered a name.
+<span class="nc bnc" id="L38" title="All 2 branches missed.">                if (!nameTextField.getText().isBlank()) {</span>
+<span class="nc" id="L39">                    game.getLeaderboard().addScore(nameTextField.getText(), finalScore);</span>
+                }
+<span class="nc" id="L41">            }</span>
+        });
+
+<span class="nc" id="L44">        gameOverLabel = new Label(&quot;Game Over!&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L45">        table.add(gameOverLabel).top().row();</span>
+
+<span class="nc" id="L47">        breakdownTable = new Table();</span>
+<span class="nc" id="L48">        breakdownLeftSpacer = breakdownTable.add();</span>
+<span class="nc" id="L49">        breakdownRightSpacer = breakdownTable.add();</span>
+<span class="nc" id="L50">        breakdownTable.row();</span>
+<span class="nc" id="L51">        table.add(breakdownTable).expandX().fillX().row();</span>
+
+<span class="nc" id="L53">        nameTextField = new TextField(&quot;&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L54">        nameTextField.setMaxLength(20);</span>
+<span class="nc" id="L55">        nameTextField.setMessageText(&quot;Enter name here&quot;);</span>
+<span class="nc" id="L56">        nameTextFieldCell = table.add(nameTextField);</span>
+<span class="nc" id="L57">        table.row();</span>
+
+<span class="nc" id="L59">        buttonCell = table.add(mainMenuButton).bottom();</span>
+<span class="nc" id="L60">        addActor(table);</span>
+<span class="nc" id="L61">    }</span>
+
+    public void onGameOver(Score score) {
+        // Store final score for the leaderboard entry button.
+<span class="nc" id="L65">        finalScore = score.totalScore();</span>
+
+<span class="nc" id="L67">        final var satisfactionText = String.format(&quot;+%d (%d%%)&quot;, score.satisfactionScore(), score.satisfactionPercentage());</span>
+<span class="nc" id="L68">        final var campusValueText = String.format(&quot;+%d (£%d)&quot;, score.campusValueScore(), score.campusValue());</span>
+
+<span class="nc" id="L70">        breakdownTable.add(new Label(&quot;Satisfaction:&quot;, GlobalState.defaultSkin)).left().padLeft(5.0f);</span>
+<span class="nc" id="L71">        breakdownTable.add(new Label(satisfactionText, GlobalState.defaultSkin)).right().padRight(5.0f).row();</span>
+<span class="nc" id="L72">        breakdownTable.add(new Label(&quot;Campus Value:&quot;, GlobalState.defaultSkin)).left().padLeft(5.0f);</span>
+<span class="nc" id="L73">        breakdownTable.add(new Label(campusValueText, GlobalState.defaultSkin)).right().padRight(5.0f).row();</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        for (var achievement : score.unlockedAchievements()) {</span>
+<span class="nc" id="L75">            breakdownTable.add(new Label(achievement.getName() + &quot;:&quot;, GlobalState.defaultSkin)).left().padLeft(5.0f);</span>
+<span class="nc" id="L76">            breakdownTable.add(new Label(String.format(&quot;+%d&quot;, achievement.getScore()), GlobalState.defaultSkin)).right().padRight(5.0f).row();</span>
+<span class="nc" id="L77">        }</span>
+<span class="nc" id="L78">        breakdownTable.add(new Label(&quot;Final Score:&quot;, GlobalState.defaultSkin)).left().padLeft(5.0f);</span>
+<span class="nc" id="L79">        breakdownTable.add(new Label(String.valueOf(score.totalScore()), GlobalState.defaultSkin)).right().padRight(5.0f).row();</span>
+
+        // Force a resize after adding new elements.
+<span class="nc" id="L82">        resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());</span>
+<span class="nc" id="L83">    }</span>
+
+    public void resize(int width, int height) {
+<span class="nc" id="L86">        getViewport().update(width, height, true);</span>
+<span class="nc" id="L87">        table.setBounds(0, 0, width, height * 0.1f);</span>
+<span class="nc" id="L88">        gameOverLabel.setFontScale(height * 0.006f);</span>
+<span class="nc" id="L89">        nameTextFieldCell.width(width * 0.75f).height(height * 0.05f).padTop(height * 0.01f).padBottom(height * 0.01f);</span>
+<span class="nc" id="L90">        buttonCell.width(width * 0.75f).height(height * 0.1f);</span>
+
+        // Set column width for breakdown table.
+<span class="nc" id="L93">        breakdownLeftSpacer.width(width * 0.45f);</span>
+<span class="nc" id="L94">        breakdownRightSpacer.width(width * 0.3f);</span>
+
+        // Size all labels in the breakdown table.
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        for (var label : breakdownTable.getChildren()) {</span>
+<span class="nc" id="L98">            ((Label) label).setFontScale(height * 0.004f);</span>
+<span class="nc" id="L99">        }</span>
+<span class="nc" id="L100">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

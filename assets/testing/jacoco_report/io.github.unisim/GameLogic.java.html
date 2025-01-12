@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameLogic.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim</a> &gt; <span class="el_source">GameLogic.java</span></div><h1>GameLogic.java</h1><pre class="source lang-java linenums">package io.github.unisim;
+
+import com.badlogic.gdx.math.MathUtils;
+import io.github.unisim.achievement.Achievement;
+import io.github.unisim.achievement.AchievementManager;
+import io.github.unisim.building.Building;
+import io.github.unisim.building.BuildingType;
+import io.github.unisim.event.*;
+import io.github.unisim.world.World;
+
+import java.util.function.BooleanSupplier;
+
+/**
+ * A class which manages the gameplay logic. This class is a new addition from the inherited codebase.
+ */
+public class GameLogic {
+    // Time related constants.
+    private static final int TOTAL_GAME_TIME = 5 * 60;
+    private static final int ONE_YEAR_TIME = 100;
+    private static final int SUMMER_TIME = 20;
+
+    private static final int SLEEPING_BUILDING_STUDENT_COUNT = 20;
+    private static final int STUDENT_TUITION_FEE = 1000;
+
+    private final World world;
+    private final AchievementManager achievementManager;
+    private final EventManager eventManager;
+    private GameState gameState;
+    private float remainingTime;
+    private int studentCount;
+    private int money;
+    private int lastTickedYear;
+
+    // Satisfaction.
+    private float satisfaction;
+    private float newBuildingSatisfaction;
+
+    public GameLogic(World world, Difficulty difficulty) {
+<span class="pc" id="L39">        this(world, difficulty, () -&gt; true);</span>
+<span class="fc" id="L40">    }</span>
+
+<span class="fc" id="L42">    public GameLogic(World world, Difficulty difficulty, BooleanSupplier canStartEvent) {</span>
+<span class="fc" id="L43">        this.world = world;</span>
+<span class="fc" id="L44">        achievementManager = new AchievementManager(this);</span>
+<span class="fc" id="L45">        eventManager = new EventManager(canStartEvent, this, difficulty);</span>
+
+        // Start in a paused state.
+<span class="fc" id="L48">        gameState = GameState.PAUSED;</span>
+<span class="fc" id="L49">        remainingTime = TOTAL_GAME_TIME;</span>
+<span class="fc" id="L50">        money = difficulty.getStartingMoney();</span>
+<span class="fc" id="L51">    }</span>
+
+    /**
+     * @return a score object for the current game state
+     */
+    public Score calculateScore() {
+        // Calculate a final score based on the total value of placed buildings, ending satisfaction, and unlocked
+        // achievements. Remaining money is not included in order to incentivise building placement.
+<span class="nc" id="L59">        final int campusValue = world</span>
+<span class="nc" id="L60">            .getBuildingManager()</span>
+<span class="nc" id="L61">            .getBuildings()</span>
+<span class="nc" id="L62">            .stream()</span>
+<span class="nc" id="L63">            .mapToInt(b -&gt; b.price)</span>
+<span class="nc" id="L64">            .sum();</span>
+<span class="nc" id="L65">        return new Score(</span>
+            campusValue,
+            satisfaction,
+<span class="nc" id="L68">            achievementManager.getUnlockedAchievements().stream().toList()</span>
+        );
+    }
+
+    /**
+     * @param building a building
+     * @return the price of the building including any discount
+     */
+    public int getBuildingPrice(Building building) {
+<span class="fc" id="L77">        int buildingPrice = building.price;</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        if (eventManager.getCurrentEvent() instanceof DiscountEvent discountEvent) {</span>
+<span class="fc" id="L79">            buildingPrice = discountEvent.applyDiscount(buildingPrice);</span>
+        }
+<span class="fc" id="L81">        return buildingPrice;</span>
+    }
+
+    /**
+     * Places the currently selected building.
+     *
+     * @return true if the building was placed; false if not
+     */
+    public boolean placeBuilding() {
+<span class="nc" id="L90">        int buildingPrice = getBuildingPrice(world.selectedBuilding);</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (money &lt; buildingPrice) {</span>
+<span class="nc" id="L92">            return false;</span>
+        }
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (!world.placeBuilding()) {</span>
+<span class="nc" id="L95">            return false;</span>
+        }
+<span class="nc" id="L97">        money -= buildingPrice;</span>
+
+        // Calculate new building satisfaction.
+<span class="nc" id="L100">        newBuildingSatisfaction += Math.min(0.25f / (float) Math.pow(satisfaction, 0.5f), 1.0f);</span>
+<span class="nc" id="L101">        return true;</span>
+    }
+
+    /**
+     * Continuously updates the student satisfaction.
+     *
+     * @param deltaTime the delta time between the last call of updateSatisfaction
+     */
+    private void updateSatisfaction(float deltaTime) {
+        // Slowly apply new building satisfaction.
+<span class="fc" id="L111">        float newBuildingFactor = newBuildingSatisfaction * deltaTime;</span>
+<span class="fc" id="L112">        satisfaction += newBuildingFactor;</span>
+<span class="fc" id="L113">        newBuildingSatisfaction -= newBuildingFactor;</span>
+<span class="fc" id="L114">        newBuildingSatisfaction = Math.max(newBuildingSatisfaction, 0.0f);</span>
+
+        // Decrease satisfaction if there isn't enough eating or learning buildings for all the students. Each restaurant
+        // can support 75 students and each library building can support 125 students. Use exponential formulas so a
+        // deficit can not just be offset by placing lots of recreation buildings.
+<span class="fc" id="L119">        var eatingDeficit = studentCount - world.getBuildingCount(BuildingType.EATING) * 75;</span>
+<span class="fc" id="L120">        var learningDeficit = studentCount - world.getBuildingCount(BuildingType.LEARNING) * 125;</span>
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">        if (eatingDeficit &gt; 0) {</span>
+<span class="nc" id="L122">            satisfaction -= ((float) Math.pow(2.0f, eatingDeficit / 12.0f) / 175.0f) * deltaTime * 0.4f;</span>
+        }
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (learningDeficit &gt; 0) {</span>
+<span class="nc" id="L125">            satisfaction -= ((float) Math.pow(2.0f, learningDeficit / 15.0f) / 75.0f) * deltaTime * 0.3f;</span>
+        }
+
+        // Decay satisfaction over time, but lower the factor based on the amount of recreation buildings.
+<span class="fc" id="L129">        float decayRate = 0.02f;</span>
+<span class="fc" id="L130">        decayRate -= world.getBuildingCount(BuildingType.RECREATION) / 250.0f;</span>
+<span class="fc" id="L131">        satisfaction -= Math.max(decayRate, 0.0015f) * deltaTime;</span>
+
+        // Apply any satisfaction changes from the current event.
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (eventManager.getCurrentEvent() instanceof SatisfactionEvent satisfactionEvent) {</span>
+<span class="nc" id="L135">            satisfaction += satisfactionEvent.getSatisfaction(deltaTime);</span>
+        }
+
+        // Clamp satisfaction between zero and one.
+<span class="fc" id="L139">        satisfaction = MathUtils.clamp(satisfaction, 0.0f, 1.0f);</span>
+<span class="fc" id="L140">    }</span>
+
+    /**
+     * Updates the game logic.
+     *
+     * @param deltaTime the delta time between the last call of update
+     */
+    public void update(float deltaTime) {
+        // Move to GAME_OVER state when timer runs out.
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (remainingTime &lt;= 0.0f) {</span>
+<span class="fc" id="L150">            gameState = GameState.GAME_OVER;</span>
+        }
+
+<span class="fc bfc" id="L153" title="All 4 branches covered.">        if (gameState == GameState.PAUSED || gameState == GameState.GAME_OVER) {</span>
+<span class="fc" id="L154">            return;</span>
+        }
+
+        // Tick timer down.
+<span class="fc" id="L158">        remainingTime -= deltaTime;</span>
+
+        // Calculate student count.
+<span class="fc" id="L161">        studentCount = world.getBuildingCount(BuildingType.SLEEPING) * SLEEPING_BUILDING_STUDENT_COUNT;</span>
+
+        // Add money if year has ticked. Each student brings in their yearly tuition fee.
+<span class="fc" id="L164">        final int year = getYear();</span>
+<span class="fc bfc" id="L165" title="All 4 branches covered.">        if (lastTickedYear != year &amp;&amp; !isSummer()) {</span>
+<span class="fc" id="L166">            final int tuitionIncome = studentCount * STUDENT_TUITION_FEE;</span>
+<span class="fc" id="L167">            money += tuitionIncome;</span>
+<span class="fc" id="L168">            lastTickedYear = year;</span>
+
+            // Add money from building passive income.
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">            for (var building : world.getBuildingManager().getBuildings()) {</span>
+<span class="nc" id="L172">                money += building.passiveIncome;</span>
+<span class="nc" id="L173">            }</span>
+        }
+
+        // Update satisfaction.
+<span class="fc" id="L177">        updateSatisfaction(deltaTime);</span>
+
+        // Update achievements and events.
+<span class="fc" id="L180">        achievementManager.update(deltaTime);</span>
+<span class="fc" id="L181">        eventManager.update(deltaTime);</span>
+
+        // Handle busy week event.
+<span class="fc" id="L184">        var peopleManager = world.getPeopleManager();</span>
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">        if (peopleManager != null) {</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">            if (eventManager.getCurrentEvent() instanceof BusyWeekEvent) {</span>
+<span class="nc" id="L187">                peopleManager.setSpawnRateMultiplier(20.0f);</span>
+            } else {
+<span class="nc" id="L189">                peopleManager.setSpawnRateMultiplier(1.0f);</span>
+            }
+        }
+
+        // Handle donation event.
+<span class="fc bfc" id="L194" title="All 2 branches covered.">        if (eventManager.getCurrentEvent() instanceof DonationEvent donationEvent) {</span>
+<span class="fc" id="L195">            money += donationEvent.getMoney();</span>
+        }
+<span class="fc" id="L197">    }</span>
+
+    /**
+     * Pauses the game if currently in the playing state.
+     */
+    public void pause() {
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        if (gameState == GameState.PLAYING) {</span>
+<span class="fc" id="L204">            gameState = GameState.PAUSED;</span>
+        }
+<span class="fc" id="L206">    }</span>
+
+    /**
+     * Unpauses the game.
+     */
+    public void unpause() {
+<span class="pc bpc" id="L212" title="1 of 2 branches missed.">        if (gameState == GameState.PAUSED) {</span>
+<span class="fc" id="L213">            gameState = GameState.PLAYING;</span>
+        }
+<span class="fc" id="L215">    }</span>
+
+    public int getSatisfactionPercentage() {
+<span class="nc" id="L218">        return MathUtils.ceil(satisfaction * 100.0f);</span>
+    }
+
+    public Achievement getRecentlyUnlockedAchievement() {
+<span class="nc" id="L222">        return achievementManager.getRecentlyUnlockedAchievement();</span>
+    }
+
+    public int getYear() {
+<span class="fc" id="L226">        return (int) (TOTAL_GAME_TIME - remainingTime - 0.5f) / ONE_YEAR_TIME + 1;</span>
+    }
+
+    public int getSecondsIntoYear() {
+<span class="fc" id="L230">        return (int) (TOTAL_GAME_TIME - remainingTime - 0.5f) % ONE_YEAR_TIME;</span>
+    }
+
+    public int getSemester() {
+<span class="fc bfc" id="L234" title="All 2 branches covered.">        if (getSecondsIntoYear() &gt;= (ONE_YEAR_TIME / 2 + SUMMER_TIME / 2)) {</span>
+<span class="fc" id="L235">            return 2;</span>
+        }
+<span class="fc" id="L237">        return 1;</span>
+    }
+
+    public boolean isSummer() {
+<span class="fc bfc" id="L241" title="All 2 branches covered.">        return getSecondsIntoYear() &lt; SUMMER_TIME;</span>
+    }
+
+    public boolean isPaused() {
+<span class="fc bfc" id="L245" title="All 2 branches covered.">        return gameState == GameState.PAUSED;</span>
+    }
+
+    public boolean isGameOver() {
+<span class="fc bfc" id="L249" title="All 2 branches covered.">        return gameState == GameState.GAME_OVER;</span>
+    }
+
+    public AchievementManager getAchievementManager() {
+<span class="nc" id="L253">        return achievementManager;</span>
+    }
+
+    public EventManager getEventManager() {
+<span class="fc" id="L257">        return eventManager;</span>
+    }
+
+    public float getRemainingTime() {
+<span class="fc" id="L261">        return remainingTime;</span>
+    }
+
+    public int getStudentCount() {
+<span class="fc" id="L265">        return studentCount;</span>
+    }
+
+    public int getMoney() {
+<span class="fc" id="L269">        return money;</span>
+    }
+
+    public float getSatisfaction() {
+<span class="fc" id="L273">        return satisfaction;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

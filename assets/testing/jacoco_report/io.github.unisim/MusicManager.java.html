@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MusicManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim</a> &gt; <span class="el_source">MusicManager.java</span></div><h1>MusicManager.java</h1><pre class="source lang-java linenums">package io.github.unisim;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
+public class MusicManager {
+    private final List&lt;String&gt; availableMusic;
+    private Music music;
+
+<span class="nc" id="L13">    public MusicManager() {</span>
+<span class="nc" id="L14">        availableMusic = List.of(&quot;music/box-jump.ogg&quot;, &quot;music/candy.ogg&quot;, &quot;music/deep-blue.ogg&quot;);</span>
+<span class="nc" id="L15">    }</span>
+
+    private void startNewMusic() {
+<span class="nc bnc" id="L18" title="All 2 branches missed.">        if (music != null) {</span>
+<span class="nc" id="L19">            music.dispose();</span>
+        }
+<span class="nc" id="L21">        int randomIndex = ThreadLocalRandom.current().nextInt(availableMusic.size());</span>
+<span class="nc" id="L22">        music = Gdx.audio.newMusic(Gdx.files.internal(availableMusic.get(randomIndex)));</span>
+<span class="nc" id="L23">        music.play();</span>
+<span class="nc" id="L24">    }</span>
+
+    /**
+     * Starts a new music track if needed.
+     */
+    public void update() {
+<span class="nc bnc" id="L30" title="All 4 branches missed.">        if (music == null || !music.isPlaying()) {</span>
+<span class="nc" id="L31">            startNewMusic();</span>
+<span class="nc" id="L32">            return;</span>
+        }
+<span class="nc" id="L34">        music.setVolume(GlobalState.settings.getVolume());</span>
+<span class="nc" id="L35">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MainUiStage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim.ui</a> &gt; <span class="el_source">MainUiStage.java</span></div><h1>MainUiStage.java</h1><pre class="source lang-java linenums">package io.github.unisim.ui;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import io.github.unisim.GameLogic;
+import io.github.unisim.GlobalState;
+import io.github.unisim.screen.GameScreen;
+import io.github.unisim.world.World;
+
+public class MainUiStage extends Stage {
+    private final GameLogic gameLogic;
+    private final World world;
+    private final InfoBar infoBar;
+    private final BuildingMenu buildingMenu;
+
+    private final GlyphLayout glyphLayout;
+    private final Label achievementLabel;
+    private EventDialog currentEventDialog;
+
+    public MainUiStage(GameScreen gameScreen) {
+<span class="nc" id="L25">        super(new ScreenViewport());</span>
+<span class="nc" id="L26">        gameLogic = gameScreen.getGameLogic();</span>
+<span class="nc" id="L27">        world = gameScreen.getWorld();</span>
+<span class="nc" id="L28">        infoBar = new InfoBar(this, gameLogic, world);</span>
+<span class="nc" id="L29">        buildingMenu = new BuildingMenu(this, world, gameLogic);</span>
+
+<span class="nc" id="L31">        glyphLayout = new GlyphLayout();</span>
+<span class="nc" id="L32">        achievementLabel = new Label(&quot;&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L33">        addActor(achievementLabel);</span>
+<span class="nc" id="L34">    }</span>
+
+    @Override
+    public void act(float delta) {
+<span class="nc" id="L38">        super.act(delta);</span>
+
+        // Handle escape key to cancel building placement
+<span class="nc bnc" id="L41" title="All 4 branches missed.">        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) &amp;&amp; world.selectedBuilding != null) {</span>
+<span class="nc" id="L42">            world.selectedBuilding = null;</span>
+        }
+
+        // Show event dialog if a new event has started
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if (gameLogic.getEventManager().isEventActive()) {</span>
+<span class="nc" id="L47">            var currentEvent = gameLogic.getEventManager().getCurrentEvent();</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            if (currentEventDialog == null) {</span>
+<span class="nc" id="L49">                currentEventDialog = new EventDialog(currentEvent, gameLogic, world, GlobalState.defaultSkin);</span>
+<span class="nc" id="L50">                currentEventDialog.show(this);</span>
+            }
+<span class="nc" id="L52">        } else {</span>
+<span class="nc" id="L53">            currentEventDialog = null;</span>
+        }
+
+        // Update achievement label.
+<span class="nc" id="L57">        final var displayAchievement = gameLogic.getRecentlyUnlockedAchievement();</span>
+<span class="nc bnc" id="L58" title="All 4 branches missed.">        achievementLabel.setVisible(displayAchievement != null || gameLogic.isPaused());</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        if (achievementLabel.isVisible()) {</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">            if (displayAchievement != null) {</span>
+<span class="nc" id="L61">                achievementLabel.setText(String.format(&quot;Achievement Unlocked: %s&quot;, displayAchievement.getName()));</span>
+            } else {
+<span class="nc" id="L63">                achievementLabel.setText(&quot;Game is paused&quot;);</span>
+            }
+
+<span class="nc" id="L66">            achievementLabel.setFontScale(Gdx.graphics.getHeight() * 0.003f);</span>
+<span class="nc" id="L67">            glyphLayout.setText(achievementLabel.getStyle().font, achievementLabel.getText());</span>
+
+<span class="nc" id="L69">            float textWidth = glyphLayout.width * achievementLabel.getFontScaleX() / 2.0f;</span>
+<span class="nc" id="L70">            float textHeight = glyphLayout.height * achievementLabel.getFontScaleY();</span>
+<span class="nc" id="L71">            achievementLabel.setPosition(Gdx.graphics.getWidth() / 2.0f - textWidth, Gdx.graphics.getHeight() - (Gdx.graphics.getHeight() * 0.05f + textHeight + 10.0f));</span>
+        }
+
+        // Update components.
+<span class="nc" id="L75">        infoBar.update();</span>
+<span class="nc" id="L76">        buildingMenu.update();</span>
+<span class="nc" id="L77">    }</span>
+
+    public void resize(int width, int height) {
+<span class="nc" id="L80">        getViewport().update(width, height, true);</span>
+<span class="nc" id="L81">        infoBar.resize(width, height);</span>
+<span class="nc" id="L82">        buildingMenu.resize(width, height);</span>
+<span class="nc" id="L83">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

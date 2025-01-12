@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventDialog.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim.ui</a> &gt; <span class="el_source">EventDialog.java</span></div><h1>EventDialog.java</h1><pre class="source lang-java linenums">package io.github.unisim.ui;
+
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.utils.Align;
+import io.github.unisim.GameLogic;
+import io.github.unisim.event.GameEvent;
+import io.github.unisim.world.World;
+
+public class EventDialog extends Dialog {
+    private final GameLogic gameLogic;
+    private final World world;
+
+    private TextureRegionDrawable createRoundedDrawable(int width, int height, int cornerRadius, Color fillColor, Color borderColor) {
+<span class="nc" id="L22">        Pixmap pixmap = new Pixmap(width, height, Pixmap.Format.RGBA8888);</span>
+        
+        // Clear the pixmap with full transparency
+<span class="nc" id="L25">        pixmap.setColor(0, 0, 0, 0);</span>
+<span class="nc" id="L26">        pixmap.fill();</span>
+
+<span class="nc" id="L28">        int border = 3;</span>
+        
+        // Draw the fill
+<span class="nc" id="L31">        pixmap.setColor(fillColor);</span>
+<span class="nc" id="L32">        pixmap.fillRectangle(border, border, width - 2 * border, height - 2 * border);</span>
+        
+        // Draw the border
+<span class="nc" id="L35">        pixmap.setColor(borderColor);</span>
+<span class="nc" id="L36">        pixmap.fillRectangle(0, 0, width, border); // Top</span>
+<span class="nc" id="L37">        pixmap.fillRectangle(0, height - border, width, border); // Bottom</span>
+<span class="nc" id="L38">        pixmap.fillRectangle(0, 0, border, height); // Left</span>
+<span class="nc" id="L39">        pixmap.fillRectangle(width - border, 0, border, height); // Right</span>
+        
+<span class="nc" id="L41">        TextureRegionDrawable drawable = new TextureRegionDrawable(new TextureRegion(new Texture(pixmap)));</span>
+<span class="nc" id="L42">        pixmap.dispose();</span>
+        
+<span class="nc" id="L44">        return drawable;</span>
+    }
+
+    public EventDialog(GameEvent event, GameLogic gameLogic, World world, Skin skin) {
+<span class="nc" id="L48">        super(&quot;&quot;, skin);</span>
+<span class="nc" id="L49">        this.gameLogic = gameLogic;</span>
+<span class="nc" id="L50">        this.world = world;</span>
+
+        // Cancel any building selection when dialog appears
+<span class="nc" id="L53">        world.selectedBuilding = null;</span>
+
+        // Create a container table with custom background
+<span class="nc" id="L56">        Table container = new Table();</span>
+<span class="nc" id="L57">        Color backgroundColor = new Color(0xFAF7F5FF);</span>
+<span class="nc" id="L58">        Color borderColor = new Color(0x144E96FF);</span>
+<span class="nc" id="L59">        TextureRegionDrawable background = createRoundedDrawable(500, 300, 30, backgroundColor, borderColor);</span>
+<span class="nc" id="L60">        container.setBackground(background);</span>
+<span class="nc" id="L61">        container.pad(30);</span>
+
+        // Style the title based on event type
+<span class="nc" id="L64">        Label titleLabel = new Label(event.getName() + &quot;!&quot;, skin);</span>
+<span class="nc" id="L65">        titleLabel.setAlignment(Align.center);</span>
+<span class="nc bnc" id="L66" title="All 3 branches missed.">        Color titleColor = switch (event.getType()) {</span>
+<span class="nc" id="L67">            case POSITIVE -&gt; new Color(0.2f, 0.8f, 0.2f, 1.0f);  // Softer green</span>
+<span class="nc" id="L68">            case NEGATIVE -&gt; new Color(0.8f, 0.2f, 0.2f, 1.0f);  // Softer red</span>
+<span class="nc" id="L69">            default -&gt; Color.WHITE;</span>
+        };
+<span class="nc" id="L71">        titleLabel.setColor(titleColor);</span>
+<span class="nc" id="L72">        titleLabel.setFontScale(2.0f);</span>
+<span class="nc" id="L73">        container.add(titleLabel).expandX().center().padBottom(20).row();</span>
+
+        // Add a separator line
+<span class="nc" id="L76">        Image separator = new Image(skin.getDrawable(&quot;white&quot;));</span>
+<span class="nc" id="L77">        separator.setColor(titleColor);</span>
+<span class="nc" id="L78">        container.add(separator).height(3).expandX().fillX().pad(10).row();</span>
+
+        // Style the description
+<span class="nc" id="L81">        Label descriptionLabel = new Label(event.getDescription(), skin);</span>
+<span class="nc" id="L82">        descriptionLabel.setAlignment(Align.center);</span>
+<span class="nc" id="L83">        descriptionLabel.setWrap(true);</span>
+<span class="nc" id="L84">        descriptionLabel.setColor(Color.BLACK);</span>
+<span class="nc" id="L85">        descriptionLabel.setFontScale(1.5f);</span>
+<span class="nc" id="L86">        container.add(descriptionLabel).width(450).pad(20).row();</span>
+
+        // Style the continue button
+<span class="nc" id="L89">        TextButton continueButton = new TextButton(&quot;Continue&quot;, skin);</span>
+<span class="nc" id="L90">        continueButton.getLabel().setFontScale(1.5f);</span>
+<span class="nc" id="L91">        continueButton.pad(15, 40, 15, 40);</span>
+<span class="nc" id="L92">        continueButton.addListener(new ChangeListener() {</span>
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+<span class="nc" id="L95">                gameLogic.unpause();</span>
+<span class="nc" id="L96">                hide();</span>
+<span class="nc" id="L97">                remove();</span>
+<span class="nc" id="L98">            }</span>
+        });
+<span class="nc" id="L100">        container.add(continueButton).padTop(20);</span>
+
+<span class="nc" id="L102">        getContentTable().add(container);</span>
+
+        // Don't block input to the rest of the game
+<span class="nc" id="L105">        setModal(false);</span>
+<span class="nc" id="L106">    }</span>
+
+    @Override
+    public Dialog show(Stage stage) {
+<span class="nc" id="L110">        super.show(stage);</span>
+        // Size and position the dialog after it's added to the stage
+<span class="nc" id="L112">        pack();</span>
+<span class="nc" id="L113">        setPosition(</span>
+<span class="nc" id="L114">            (stage.getWidth() - getWidth()) / 2,</span>
+<span class="nc" id="L115">            (stage.getHeight() - getHeight()) / 2</span>
+        );
+<span class="nc" id="L117">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

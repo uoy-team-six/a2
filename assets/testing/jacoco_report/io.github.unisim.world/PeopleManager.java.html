@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PeopleManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim.world</a> &gt; <span class="el_source">PeopleManager.java</span></div><h1>PeopleManager.java</h1><pre class="source lang-java linenums">package io.github.unisim.world;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector3;
+import io.github.unisim.building.Building;
+import io.github.unisim.building.BuildingManager;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
+public class PeopleManager {
+    private final BuildingManager buildingManager;
+    private final Matrix4 isoTransform;
+    private final List&lt;Person&gt; people;
+    private final Texture spritesheet;
+<span class="nc" id="L21">    private float spawnTimer = 0.0f;</span>
+<span class="nc" id="L22">    private float spawnRateMultiplier = 1.0f;</span>
+
+<span class="nc" id="L24">    public PeopleManager(BuildingManager buildingManager, Matrix4 isoTransform) {</span>
+<span class="nc" id="L25">        this.buildingManager = buildingManager;</span>
+<span class="nc" id="L26">        this.isoTransform = isoTransform;</span>
+<span class="nc" id="L27">        people = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L28">        spritesheet = new Texture(Gdx.files.internal(&quot;people.png&quot;));</span>
+<span class="nc" id="L29">    }</span>
+
+    private int calculateMaxPeopleCount() {
+        // Scale the maximum number of people as a function of the number of buildings.
+<span class="nc" id="L33">        final int buildingCount = buildingManager.getBuildings().size();</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">        if (buildingCount &lt; 2) {</span>
+<span class="nc" id="L35">            return 0;</span>
+        }
+<span class="nc" id="L37">        return buildingCount * 10;</span>
+    }
+
+    private float calculateSpawnRate() {
+        // Note that spawn rate is the reciprocal, so we divide by the multiplier.
+<span class="nc" id="L42">        final int buildingCount = buildingManager.getBuildings().size();</span>
+<span class="nc" id="L43">        return 3.0f / buildingCount / spawnRateMultiplier;</span>
+    }
+
+    private Building getRandomBuilding() {
+<span class="nc" id="L47">        var building = buildingManager.getBuildings().get(ThreadLocalRandom.current().nextInt(0, buildingManager.getBuildings().size()));</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">        if (building == buildingManager.getPreviewBuilding()) {</span>
+<span class="nc" id="L49">            return null;</span>
+        }
+<span class="nc" id="L51">        return building;</span>
+    }
+
+    /**
+     * Renders people on the world.
+     *
+     * @param deltaTime the delta time between the last call of render
+     * @param batch     a suitable sprite batch to render with
+     */
+    public void render(float deltaTime, SpriteBatch batch) {
+<span class="nc" id="L61">        spawnTimer += deltaTime;</span>
+<span class="nc bnc" id="L62" title="All 4 branches missed.">        if (spawnTimer &gt;= calculateSpawnRate() &amp;&amp; people.size() &lt; calculateMaxPeopleCount()) {</span>
+<span class="nc" id="L63">            spawnTimer = 0.0f;</span>
+
+            // Pick a random source and target building.
+<span class="nc" id="L66">            final var sourceBuilding = getRandomBuilding();</span>
+<span class="nc" id="L67">            final var targetBuilding = getRandomBuilding();</span>
+<span class="nc bnc" id="L68" title="All 6 branches missed.">            if (sourceBuilding != null &amp;&amp; targetBuilding != null &amp;&amp; sourceBuilding != targetBuilding) {</span>
+<span class="nc" id="L69">                people.add(new Person(sourceBuilding.location.toVector(), targetBuilding, isoTransform));</span>
+            }
+        }
+
+<span class="nc" id="L73">        var iter = people.iterator();</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        while (iter.hasNext()) {</span>
+<span class="nc" id="L75">            Person person = iter.next();</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">            if (person.update(deltaTime)) {</span>
+                // Person has expired.
+<span class="nc" id="L78">                iter.remove();</span>
+<span class="nc" id="L79">                continue;</span>
+            }
+
+<span class="nc" id="L82">            var position = new Vector3(person.getPosition(), 0);</span>
+<span class="nc" id="L83">            position.mul(isoTransform);</span>
+
+<span class="nc" id="L85">            int spriteX = person.getSpriteColumn() * 16;</span>
+<span class="nc" id="L86">            int spriteY = person.getSpriteRow() * 24;</span>
+<span class="nc" id="L87">            var region = new TextureRegion(spritesheet, spriteX, spriteY, 16, 24);</span>
+<span class="nc" id="L88">            batch.draw(region, position.x, position.y, 1.0f, 1.5f);</span>
+<span class="nc" id="L89">        }</span>
+<span class="nc" id="L90">    }</span>
+
+    public void setSpawnRateMultiplier(float spawnRateMultiplier) {
+<span class="nc" id="L93">        this.spawnRateMultiplier = spawnRateMultiplier;</span>
+<span class="nc" id="L94">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

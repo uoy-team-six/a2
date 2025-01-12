@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StartMenuScreen.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim.screen</a> &gt; <span class="el_source">StartMenuScreen.java</span></div><h1>StartMenuScreen.java</h1><pre class="source lang-java linenums">package io.github.unisim.screen;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.ScreenUtils;
+import io.github.unisim.GameCursor;
+import io.github.unisim.GlobalState;
+import io.github.unisim.UniSimGame;
+
+/**
+ * The start menu screen which presents the player with the option to start the
+ * game
+ * or access the settings menu.
+ */
+public class StartMenuScreen extends ScreenAdapter {
+    private final UniSimGame game;
+    private final Stage stage;
+<span class="nc" id="L24">    private final InputMultiplexer inputMultiplexer = new InputMultiplexer();</span>
+
+    /**
+     * Create a new StartMenuScreen and draw the initial UI layout.
+     */
+<span class="nc" id="L29">    public StartMenuScreen(UniSimGame game) {</span>
+<span class="nc" id="L30">        this.game = game;</span>
+<span class="nc" id="L31">        stage = new Stage();</span>
+
+<span class="nc" id="L33">        final var playButton = new TextButton(&quot;Play&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L34">        playButton.addListener(new ClickListener() {</span>
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Switch to the game screen.
+<span class="nc" id="L38">                game.setScreen(game.createGameScreen());</span>
+<span class="nc" id="L39">            }</span>
+        });
+
+<span class="nc" id="L42">        final var leaderboardButton = new TextButton(&quot;Leaderboard&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L43">        leaderboardButton.addListener(new ClickListener() {</span>
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Switch to the leaderboard screen.
+<span class="nc" id="L47">                game.setScreen(game.getLeaderboardScreen());</span>
+<span class="nc" id="L48">            }</span>
+        });
+
+<span class="nc" id="L51">        final var helpButton = new TextButton(&quot;Help&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L52">        helpButton.addListener(new ClickListener() {</span>
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Switch to the help screen.
+<span class="nc" id="L56">                game.setScreen(game.getHelpScreen());</span>
+<span class="nc" id="L57">            }</span>
+        });
+
+<span class="nc" id="L60">        final var settingsButton = new TextButton(&quot;Settings&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L61">        settingsButton.addListener(new ClickListener() {</span>
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                // Switch to the settings screen.
+<span class="nc" id="L65">                game.setScreen(game.getSettingsScreen());</span>
+<span class="nc" id="L66">            }</span>
+        });
+
+<span class="nc" id="L69">        final var quitButton = new TextButton(&quot;Quit&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L70">        quitButton.addListener(new ClickListener() {</span>
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+<span class="nc" id="L73">                Gdx.app.exit();</span>
+<span class="nc" id="L74">            }</span>
+        });
+
+        // Add UI elements to the stage in a table.
+<span class="nc" id="L78">        final var table = new Table();</span>
+<span class="nc" id="L79">        table.setFillParent(true);</span>
+<span class="nc" id="L80">        table.pad(100);</span>
+<span class="nc" id="L81">        table.add(playButton).center().width(250).height(100).padBottom(10).row();</span>
+<span class="nc" id="L82">        table.add(leaderboardButton).center().width(250).height(67).padBottom(10).row();</span>
+<span class="nc" id="L83">        table.add(helpButton).center().width(250).height(67).padBottom(10).row();</span>
+<span class="nc" id="L84">        table.add(settingsButton).center().width(250).height(67).padBottom(10).row();</span>
+<span class="nc" id="L85">        table.add(quitButton).center().width(250).height(67);</span>
+<span class="nc" id="L86">        stage.addActor(table);</span>
+
+<span class="nc" id="L88">        inputMultiplexer.addProcessor(GlobalState.fullscreenInputProcessor);</span>
+<span class="nc" id="L89">        inputMultiplexer.addProcessor(stage);</span>
+<span class="nc" id="L90">    }</span>
+
+    @Override
+    public void render(float delta) {
+        // Clear the screen
+<span class="nc" id="L95">        ScreenUtils.clear(GlobalState.UISecondaryColour);</span>
+
+        // Set the pointer cursor.
+<span class="nc" id="L98">        game.setCursor(GameCursor.POINTER);</span>
+
+        // Draw the stage containing buttons
+<span class="nc" id="L101">        stage.act(delta);</span>
+<span class="nc" id="L102">        stage.draw();</span>
+<span class="nc" id="L103">    }</span>
+
+    @Override
+    public void resize(int width, int height) {
+<span class="nc" id="L107">        stage.getViewport().update(width, height, true);</span>
+<span class="nc" id="L108">    }</span>
+
+    @Override
+    public void show() {
+<span class="nc" id="L112">        Gdx.input.setInputProcessor(inputMultiplexer);</span>
+<span class="nc" id="L113">    }</span>
+
+    @Override
+    public void dispose() {
+<span class="nc" id="L117">        stage.dispose();</span>
+<span class="nc" id="L118">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

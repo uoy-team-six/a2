@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LeaderboardScreen.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">headless</a> &gt; <a href="index.source.html" class="el_package">io.github.unisim.screen</a> &gt; <span class="el_source">LeaderboardScreen.java</span></div><h1>LeaderboardScreen.java</h1><pre class="source lang-java linenums">package io.github.unisim.screen;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.ScreenUtils;
+import io.github.unisim.GameCursor;
+import io.github.unisim.GlobalState;
+import io.github.unisim.UniSimGame;
+
+public class LeaderboardScreen extends ScreenAdapter {
+    private final UniSimGame game;
+    private final Stage stage;
+    private final InputMultiplexer inputMultiplexer;
+    private final Table scoreTable;
+
+<span class="nc" id="L24">    public LeaderboardScreen(UniSimGame game) {</span>
+<span class="nc" id="L25">        this.game = game;</span>
+<span class="nc" id="L26">        stage = new Stage();</span>
+<span class="nc" id="L27">        inputMultiplexer = new InputMultiplexer();</span>
+
+<span class="nc" id="L29">        final var backButton = new TextButton(&quot;Back&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L30">        backButton.addListener(new ClickListener() {</span>
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+<span class="nc" id="L33">                game.setScreen(game.getStartMenuScreen());</span>
+<span class="nc" id="L34">            }</span>
+        });
+
+<span class="nc" id="L37">        final var table = new Table();</span>
+<span class="nc" id="L38">        scoreTable = new Table();</span>
+<span class="nc" id="L39">        table.setFillParent(true);</span>
+<span class="nc" id="L40">        table.center().pad(100);</span>
+<span class="nc" id="L41">        table.add(backButton).bottom().width(350).height(67).row();</span>
+<span class="nc" id="L42">        table.add(new ScrollPane(scoreTable, GlobalState.defaultSkin)).expandX().fillX().padTop(10.0f);</span>
+<span class="nc" id="L43">        stage.addActor(table);</span>
+
+<span class="nc" id="L45">        inputMultiplexer.addProcessor(GlobalState.fullscreenInputProcessor);</span>
+<span class="nc" id="L46">        inputMultiplexer.addProcessor(stage);</span>
+<span class="nc" id="L47">    }</span>
+
+    @Override
+    public void render(float delta) {
+        // Clear the screen.
+<span class="nc" id="L52">        ScreenUtils.clear(GlobalState.UISecondaryColour);</span>
+
+        // Set the pointer cursor.
+<span class="nc" id="L55">        game.setCursor(GameCursor.POINTER);</span>
+
+        // Draw the stage.
+<span class="nc" id="L58">        stage.act(delta);</span>
+<span class="nc" id="L59">        stage.draw();</span>
+<span class="nc" id="L60">    }</span>
+
+    @Override
+    public void resize(int width, int height) {
+<span class="nc" id="L64">        stage.getViewport().update(width, height, true);</span>
+<span class="nc" id="L65">    }</span>
+
+    @Override
+    public void show() {
+<span class="nc" id="L69">        Gdx.input.setInputProcessor(inputMultiplexer);</span>
+
+        // Clear table.
+<span class="nc" id="L72">        scoreTable.clear();</span>
+
+        // Display empty message if needed.
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if (game.getLeaderboard().getSortedNames().isEmpty()) {</span>
+<span class="nc" id="L76">            var label = new Label(&quot;There are no entries yet&quot;, GlobalState.defaultSkin);</span>
+<span class="nc" id="L77">            label.setFontScale(2.0f);</span>
+<span class="nc" id="L78">            scoreTable.add(label).center();</span>
+<span class="nc" id="L79">        } else {</span>
+            // Add spacing rows.
+<span class="nc" id="L81">            scoreTable.add().width(225);</span>
+<span class="nc" id="L82">            scoreTable.add().width(125);</span>
+<span class="nc" id="L83">            scoreTable.row();</span>
+        }
+
+<span class="nc" id="L86">        var sortedNames = game.getLeaderboard().getSortedNames();</span>
+<span class="nc bnc" id="L87" title="All 4 branches missed.">        for (int i = 0; i &lt; sortedNames.size() &amp;&amp; i &lt; 5; i++) {</span>
+<span class="nc" id="L88">            var name = sortedNames.get(i);</span>
+<span class="nc" id="L89">            int score = game.getLeaderboard().getScore(name);</span>
+<span class="nc" id="L90">            var nameLabel = new Label(name, GlobalState.defaultSkin);</span>
+<span class="nc" id="L91">            var scoreLabel = new Label(String.valueOf(score), GlobalState.defaultSkin);</span>
+<span class="nc" id="L92">            nameLabel.setFontScale(2.0f);</span>
+<span class="nc" id="L93">            scoreLabel.setFontScale(2.0f);</span>
+<span class="nc" id="L94">            scoreTable.add(nameLabel).left().padLeft(5.0f);</span>
+<span class="nc" id="L95">            scoreTable.add(scoreLabel).right().padRight(5.0f).row();</span>
+        }
+<span class="nc" id="L97">    }</span>
+
+    @Override
+    public void dispose() {
+<span class="nc" id="L101">        stage.dispose();</span>
+<span class="nc" id="L102">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
